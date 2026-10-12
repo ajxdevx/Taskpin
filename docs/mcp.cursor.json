@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "taskpin": {
+      "command": "npx",
+      "args": ["-y", "taskpin", "mcp", "--root", "${workspaceFolder}"],
+      "env": {
+        "TASKPIN_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}

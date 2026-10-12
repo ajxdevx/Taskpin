@@ -1,0 +1,18 @@
+---
+description: Use taskpin to pin task-scoped context before exploring or editing the codebase
+globs:
+alwaysApply: true
+---
+
+# taskpin
+
+When the user gives a concrete task (bug, feature, refactor), **do not** read the whole repo blindly.
+
+1. **Rank first:** run `taskpin route --task "<task>"` or call MCP `route` with the same task.
+2. **Pack when needed:** `taskpin pack --task "<task>" --budget 12000 --profile default` (or `claude` / `copilot` / `cursor`, or MCP `get_context_pack`).
+3. **Explain gaps:** `taskpin explain <path> --task "<task>"` if a file looks missing or wrongly omitted.
+4. **Branch work:** `taskpin changed --base main --task "review changes"` for PR-sized context.
+
+Respect packed **reasons** (`keyword-match`, `import-neighbor`, `test-pair`, etc.). Do not paste raw `.env` or credential files; taskpin blocks/redacts many secret patterns.
+
+If `.taskpin/hook-pack.md` exists and is fresh, prefer it as starting context for the current user message.
