@@ -1,0 +1,96 @@
+name: taskpin
+description: Scan for secrets, then build a task-scoped context pack for pull requests and issues.
+branding:
+  icon: pin
+  color: blue
+inputs:
+  task:
+    description: Override task text (default from PR/issue title and body)
+    required: false
+  budget:
+    description: Token budget for the pack
+    required: false
+    default: "12000"
+  mode:
+    description: auto | pack | changed | scan (scan = secret check only)
+    required: false
+    default: auto
+  base:
+    description: Git base ref for changed mode
+    required: false
+    default: ""
+  scope:
+    description: Monorepo subpath under the repository root
+    required: false
+    default: ""
+  profile:
+    description: Output profile (cursor, claude, copilot, default)
+    required: false
+    default: default
+  output-dir:
+    description: Directory under the workspace for pack artifacts
+    required: false
+    default: taskpin-output
+  upload-artifact:
+    description: Upload taskpin-output as a workflow artifact
+    required: false
+    default: "true"
+outputs:
+  markdown-path:
+    description: Path to taskpin-context.md
+  json-path:
+    description: Path to taskpin-context.json
+  comment-path:
+    description: Path to taskpin-comment.md
+  summary-path:
+    description: Path to taskpin-summary.md
+  pack-files:
+    description: Number of files in the pack
+  pack-tokens:
+    description: Estimated tokens used
+  scan-findings:
+    description: Secret scan hit count (0 when clean)
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Install taskpin
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd "${{ github.action_path }}"
+        npm ci
+        npm run build
+    - name: taskpin ci
+      shell: bash
+      env:
+        INPUT_TASK: ${{ inputs.task }}
+        INPUT_BUDGET: ${{ inputs.budget }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_BASE: ${{ inputs.base }}
+        INPUT_SCOPE: ${{ inputs.scope }}
+        INPUT_PROFILE: ${{ inputs.profile }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        ROOT="${{ github.workspace }}"
+        ARGS=(ci --root "$ROOT" --budget "$INPUT_BUDGET" --profile "$INPUT_PROFILE" --output-dir "$INPUT_OUTPUT_DIR")
+        if [ -n "$INPUT_TASK" ]; then ARGS+=(--task "$INPUT_TASK"); fi
+        if [ -n "$INPUT_BASE" ]; then ARGS+=(--base "$INPUT_BASE"); fi
+        if [ -n "$INPUT_SCOPE" ]; then ARGS+=(--scope "$INPUT_SCOPE"); fi
+        if [ "$INPUT_MODE" = "scan" ]; then
+          ARGS+=(--scan-only)
+        else
+          ARGS+=(--mode "$INPUT_MODE")
+        fi
+        node "${{ github.action_path }}/dist/cli.js" "${ARGS[@]}"
+    - name: Upload context pack
+      if: inputs.upload-artifact == 'true' && inputs.mode != 'scan'
+      uses: actions/upload-artifact@v4
+      with:
+        name: taskpin-context-pack
+        path: ${{ github.workspace }}/${{ inputs.output-dir }}/
+        if-no-files-found: ignore

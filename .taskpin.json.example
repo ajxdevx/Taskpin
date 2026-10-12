@@ -1,0 +1,13 @@
+{
+  "budget": 8000,
+  "model": "claude",
+  "profile": "default",
+  "format": "markdown",
+  "base": "main",
+  "redactSecrets": true,
+  "task": "optional default task for pack/route",
+  "since": "HEAD~5",
+  "saveManifest": false,
+  "useIndex": true,
+  "scope": "apps/web"
+}

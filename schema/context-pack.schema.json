@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ajxdevx/Taskpin/main/schema/context-pack.schema.json",
+  "title": "taskpin context pack",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "version",
+    "root",
+    "task",
+    "budgetTokens",
+    "usedTokens",
+    "generatedAt",
+    "files"
+  ],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "schema_version": { "type": "string", "const": "1.0" },
+    "version": { "type": "integer", "const": 1 },
+    "output_profile": {
+      "type": "string",
+      "enum": ["cursor", "claude", "copilot"]
+    },
+    "root": { "type": "string" },
+    "task": { "type": "string" },
+    "budgetTokens": { "type": "integer", "minimum": 500 },
+    "tokenModel": { "type": "string" },
+    "budgetReserved": { "type": "integer", "minimum": 0 },
+    "usedTokens": { "type": "integer", "minimum": 0 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "git": {
+      "type": "object",
+      "required": ["branch", "base", "mode"],
+      "properties": {
+        "branch": { "type": ["string", "null"] },
+        "base": { "type": ["string", "null"] },
+        "since": { "type": ["string", "null"] },
+        "mode": { "type": "string", "enum": ["default", "changed", "delta"] }
+      },
+      "additionalProperties": false
+    },
+    "taskParse": {
+      "type": "object",
+      "properties": {
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "filenames": { "type": "array", "items": { "type": "string" } },
+        "symbols": { "type": "array", "items": { "type": "string" } },
+        "quoted": { "type": "array", "items": { "type": "string" } },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "blockedSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "kinds"],
+        "properties": {
+          "path": { "type": "string" },
+          "kinds": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "omitted": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/omittedReceipt" }
+    },
+    "files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/packedFile" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "packReason": {
+      "type": "string",
+      "enum": [
+        "agent-rules",
+        "readme",
+        "keyword-match",
+        "phrase-match",
+        "path-match",
+        "recent-change",
+        "since-change",
+        "branch-diff",
+        "pickaxe",
+        "import-neighbor",
+        "test-pair",
+        "entrypoint",
+        "secret-redacted"
+      ]
+    },
+    "fileSignal": {
+      "type": "object",
+      "required": ["reason", "points", "weighted", "applied"],
+      "properties": {
+        "reason": { "$ref": "#/$defs/packReason" },
+        "points": { "type": "number" },
+        "weighted": { "type": "number" },
+        "applied": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "packedFile": {
+      "type": "object",
+      "required": [
+        "path",
+        "reasons",
+        "signals",
+        "score",
+        "presentation",
+        "tokens",
+        "content"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/packReason" }
+        },
+        "signals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fileSignal" }
+        },
+        "score": { "type": "number" },
+        "presentation": {
+          "type": "string",
+          "enum": ["full", "slice", "signature"]
+        },
+        "tokens": { "type": "integer", "minimum": 0 },
+        "content": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "omittedReceipt": {
+      "type": "object",
+      "required": ["path", "score", "reasons", "signals", "omit"],
+      "properties": {
+        "path": { "type": "string" },
+        "score": { "type": "number" },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/packReason" }
+        },
+        "signals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fileSignal" }
+        },
+        "omit": {
+          "type": "string",
+          "enum": [
+            "budget",
+            "blocked-secret",
+            "not-packable",
+            "read-error",
+            "not-ranked"
+          ]
+        },
+        "detail": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
